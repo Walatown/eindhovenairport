@@ -7,7 +7,7 @@ import { lookupAirport } from '../data/airports';
 //
 // Flight board  GET https://www.eindhovenairport.nl/api/flights
 //   Authoritative list of EIN flights (rolling window, ~4–6 h history).
-//   Base64-encoded JSON. No auth. 60 s server cache. Proxied via /ein-api.
+//   Base64-encoded JSON. No auth. 60 s server cache. Proxied locally via /ein-api.
 //
 // Position — by callsign  GET https://api.adsb.lol/v2/callsign/{cs}
 //   Global ADS-B position lookup. Used as primary position source for
@@ -33,6 +33,17 @@ const EHEH = { lat: 51.4501, lng: 5.37453 };
 const EIN_CODES = new Set(['EHEH', 'EIN']);
 const DEP_RADIUS = 500; // nmi — radius sweep for older departures (~925 km)
 
+const EIN_API_BASE = import.meta.env.VITE_EIN_API_BASE ?? (
+  import.meta.env.DEV ? '/ein-api' : 'https://www.eindhovenairport.nl'
+);
+const ADSB_API_BASE = import.meta.env.VITE_ADSB_API_BASE ?? (
+  import.meta.env.DEV ? '/adsb' : 'https://api.adsb.lol'
+);
+
+function apiUrl(base, path) {
+  return `${base.replace(/\/$/, '')}${path}`;
+}
+
 // ── Distance ──────────────────────────────────────────────────────────────────
 function toRad(d) { return d * Math.PI / 180; }
 
@@ -50,7 +61,7 @@ const BOARD_TTL = 60_000;
 async function fetchFlightBoard() {
   if (_boardCache && Date.now() - _boardCacheTs < BOARD_TTL) return _boardCache;
 
-  const res = await fetch('/ein-api/api/flights');
+  const res = await fetch(apiUrl(EIN_API_BASE, '/api/flights'));
   if (!res.ok) throw new Error(`Flight board HTTP ${res.status}`);
 
   const b64 = await res.json();
@@ -87,7 +98,7 @@ function routeAirports(boardFlight) {
 // ── adsb.lol — per-callsign global lookup ─────────────────────────────────────
 async function fetchByCallsign(callsign) {
   try {
-    const res = await fetch(`/adsb/v2/callsign/${encodeURIComponent(callsign)}`);
+    const res = await fetch(apiUrl(ADSB_API_BASE, `/v2/callsign/${encodeURIComponent(callsign)}`));
     if (!res.ok) return null;
     const data = await res.json();
     if (!Array.isArray(data.ac) || data.ac.length === 0) return null;
@@ -108,7 +119,7 @@ async function lookupBoardFlight(boardFlight) {
 // ── adsb.lol — radius sweep ───────────────────────────────────────────────────
 async function fetchRadius(nmi) {
   try {
-    const res = await fetch(`/adsb/v2/lat/${EHEH.lat}/lon/${EHEH.lng}/dist/${nmi}`);
+    const res = await fetch(apiUrl(ADSB_API_BASE, `/v2/lat/${EHEH.lat}/lon/${EHEH.lng}/dist/${nmi}`));
     if (!res.ok) return [];
     const data = await res.json();
     return (Array.isArray(data.ac) ? data.ac : []).filter(
