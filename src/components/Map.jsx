@@ -4,7 +4,10 @@ import { useFlights } from '../hooks/useFlights';
 import FlightCard from './FlightCard';
 import { AIRPORT_COORDS } from '../data/airports';
 
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+const hasMapboxToken = Boolean(MAPBOX_TOKEN && MAPBOX_TOKEN !== 'your_mapbox_token_here');
+
+mapboxgl.accessToken = MAPBOX_TOKEN || '';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const EIN = [5.3745, 51.4501];
@@ -264,6 +267,7 @@ export default function MapSection() {
 
   // ── Init map ──────────────────────────────────────────────────────────────
   useEffect(() => {
+    if (!hasMapboxToken) return;
     if (!mapEl.current || mapRef.current) return;
 
     const map = new mapboxgl.Map({
@@ -614,8 +618,15 @@ export default function MapSection() {
           opacity={selected ? 0 : panelOpacity}
         />
 
+        {!hasMapboxToken && (
+          <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, color: '#cdd6ea', fontSize: 14, fontWeight: 500, textAlign: 'center', maxWidth: 360, padding: '0 24px' }}>
+            <strong style={{ color: '#f0f4ff', fontSize: 16 }}>Map unavailable</strong>
+            <span>Add a public Mapbox token to enable the live globe.</span>
+          </div>
+        )}
+
         {/* Loading overlay */}
-        {!ready && (
+        {hasMapboxToken && !ready && (
           <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', display: 'flex', alignItems: 'center', gap: 12, color: '#cdd6ea', fontSize: 14, fontWeight: 500 }}>
             <div className="ein-spin" />
             Acquiring satellite imagery…
