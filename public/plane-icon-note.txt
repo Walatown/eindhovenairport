@@ -1,0 +1,2 @@
+Place a plane-icon.png here if you want a custom PNG marker.
+Currently the map uses a Unicode ✈ character as the plane marker.

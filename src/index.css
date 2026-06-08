@@ -1,0 +1,124 @@
+@import 'mapbox-gl/dist/mapbox-gl.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS custom properties (matches reference palette) ───────────────────── */
+:root {
+  --blue:       #2f6bfe;
+  --blue-dark:  #1f54e0;
+  --ink:        #0e1116;
+  --muted:      #8b93a3;
+  --line:       #eceef2;
+  --bg:         #ffffff;
+  --font:       "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+::selection { background: rgba(47,107,254,.18); }
+#root { min-height: 100vh; }
+
+/* ── Mapbox overrides ────────────────────────────────────────────────────── */
+.maplibregl-ctrl-attrib,
+.mapboxgl-ctrl-attrib { font-size: 10px; opacity: .6; }
+.mapboxgl-canvas { outline: none; }
+
+/* ── Keyframes ───────────────────────────────────────────────────────────── */
+@keyframes ehbob   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
+@keyframes ehblink { 0%,100%{opacity:1} 50%{opacity:.25} }
+@keyframes ehfade  { from{opacity:0} to{opacity:1} }
+@keyframes ehspin  { to{transform:rotate(360deg)} }
+@keyframes einpulse {
+  0%   { transform:scale(1);   opacity:.6; }
+  100% { transform:scale(4.5); opacity:0;  }
+}
+@keyframes plring {
+  0%   { transform:translate(-50%,-50%) scale(.6);  opacity:.8; }
+  100% { transform:translate(-50%,-50%) scale(1.5); opacity:0;  }
+}
+
+/* ── Airport marker ──────────────────────────────────────────────────────── */
+.ein-marker { position:relative; width:0; height:0; transition:opacity .3s; }
+.ein-marker .ein-core {
+  position:absolute; left:-6px; top:-6px;
+  width:12px; height:12px; border-radius:50%;
+  background:var(--blue); border:2px solid #fff;
+  box-shadow:0 0 0 1px rgba(0,0,0,.25);
+}
+.ein-marker .ein-pulse {
+  position:absolute; left:-6px; top:-6px;
+  width:12px; height:12px; border-radius:50%;
+  background:var(--blue);
+  animation:einpulse 1.8s ease-out infinite;
+}
+.ein-marker .ein-label {
+  position:absolute; left:14px; top:-12px;
+  white-space:nowrap;
+  background:rgba(12,16,24,.82); color:#fff;
+  font:600 12px/1 var(--font); padding:6px 10px;
+  border-radius:8px; border:1px solid rgba(255,255,255,.14);
+}
+
+/* ── 3-D plane markers ───────────────────────────────────────────────────── */
+.plane3d { position:relative; width:0; height:0; cursor:pointer; transition:opacity .35s; }
+.plane3d .pl-shadow {
+  position:absolute; left:-9px; top:-3px;
+  width:18px; height:7px; border-radius:50%;
+  background:rgba(0,0,0,.38); filter:blur(1.5px);
+}
+.plane3d .pl-stalk {
+  position:absolute; left:0; top:-22px;
+  width:1.5px; height:22px; transform:translateX(-50%);
+  background:linear-gradient(to bottom,rgba(47,107,254,.7),rgba(47,107,254,0));
+}
+.plane3d .pl-lift {
+  position:absolute; left:0; top:-22px;
+  transform:translate(-50%,-50%);
+}
+.plane3d .pl-icon {
+  display:block;
+  filter:drop-shadow(0 4px 5px rgba(0,0,0,.45));
+  transition:transform .15s linear;
+}
+.plane3d .pl-ring {
+  position:absolute; left:50%; top:50%;
+  width:40px; height:40px; border-radius:50%;
+  transform:translate(-50%,-50%) scale(.5);
+  border:2px solid var(--blue); opacity:0;
+  transition:opacity .2s, transform .2s;
+}
+.plane3d .pl-tag {
+  position:absolute; left:14px; top:-46px;
+  white-space:nowrap;
+  background:rgba(12,16,24,.82); color:#fff;
+  font:700 11px/1 var(--font); padding:5px 8px;
+  border-radius:7px; border:1px solid rgba(255,255,255,.16);
+  opacity:0; transform:translateY(3px);
+  transition:opacity .18s, transform .18s;
+  pointer-events:none;
+}
+.plane3d:hover .pl-tag  { opacity:1; transform:translateY(0); }
+.plane3d.sel .pl-ring   { opacity:1; transform:translate(-50%,-50%) scale(1); animation:plring 1.6s ease-out infinite; }
+.plane3d.sel .pl-tag    { opacity:1; transform:translateY(0); background:var(--blue); border-color:var(--blue); }
+
+/* ── Timetable hover ─────────────────────────────────────────────────────── */
+.tt-row:hover          { box-shadow:0 12px 30px rgba(16,24,40,.12); transform:translateY(-2px); border-color:#cdd9ee; border-left-color:var(--blue); }
+.tt-row:hover .tt-track { opacity:1; }
+
+/* ── Loading spinner ─────────────────────────────────────────────────────── */
+.ein-spin {
+  width:18px; height:18px;
+  border:2px solid rgba(255,255,255,.25);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:ehspin .8s linear infinite;
+}
