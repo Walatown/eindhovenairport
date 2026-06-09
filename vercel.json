@@ -11,10 +11,10 @@
   ],
   "functions": {
     "api/adsb/[...path].js": {
-      "maxDuration": 10
+      "maxDuration": 30
     },
     "api/ein-api/[...path].js": {
-      "maxDuration": 10
+      "maxDuration": 30
     }
   }
 }

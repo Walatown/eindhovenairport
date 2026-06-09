@@ -39,14 +39,32 @@ export default async function handler(req, res) {
       },
     });
 
+    // Get response body as text first to safely parse
+    const responseText = await response.text();
+
     if (!response.ok) {
-      console.error(`[adsb] upstream ${response.status} ${response.statusText}`);
+      console.error(`[adsb] upstream error ${response.status}: ${responseText.substring(0, 200)}`);
+      return res.status(response.status).json({
+        error: `adsb.lol returned ${response.status}`,
+        body: responseText.substring(0, 500)
+      });
     }
 
-    const data = await response.json();
+    // Try to parse as JSON, fall back to text if it fails
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error(`[adsb] failed to parse JSON: ${responseText.substring(0, 200)}`);
+      return res.status(502).json({
+        error: 'Invalid JSON from adsb.lol',
+        body: responseText.substring(0, 500)
+      });
+    }
+
     res.status(response.status).json(data);
   } catch (error) {
-    console.error('[adsb] error:', error.message);
-    res.status(502).json({ error: 'Bad Gateway', details: error.message });
+    console.error('[adsb] fetch error:', error.message);
+    res.status(502).json({ error: 'Upstream request failed', details: error.message });
   }
 }

@@ -40,7 +40,10 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      console.error(`[ein-api] upstream ${response.status} ${response.statusText}`);
+      console.error(`[ein-api] upstream error ${response.status}`);
+      return res.status(response.status).json({
+        error: `Eindhoven Airport API returned ${response.status}`
+      });
     }
 
     const contentType = response.headers.get('content-type');
@@ -54,7 +57,7 @@ export default async function handler(req, res) {
 
     res.status(response.status).setHeader('Content-Type', contentType || 'application/json').send(data);
   } catch (error) {
-    console.error('[ein-api] error:', error.message);
-    res.status(502).json({ error: 'Bad Gateway', details: error.message });
+    console.error('[ein-api] fetch error:', error.message);
+    res.status(502).json({ error: 'Upstream request failed', details: error.message });
   }
 }
