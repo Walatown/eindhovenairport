@@ -33,12 +33,8 @@ const EHEH = { lat: 51.4501, lng: 5.37453 };
 const EIN_CODES = new Set(['EHEH', 'EIN']);
 const DEP_RADIUS = 500; // nmi — radius sweep for older departures (~925 km)
 
-const EIN_API_BASE = import.meta.env.VITE_EIN_API_BASE ?? (
-  import.meta.env.DEV ? '/ein-api' : 'https://www.eindhovenairport.nl'
-);
-const ADSB_API_BASE = import.meta.env.VITE_ADSB_API_BASE ?? (
-  import.meta.env.DEV ? '/adsb' : 'https://api.adsb.lol'
-);
+const EIN_API_BASE = import.meta.env.VITE_EIN_API_BASE ?? '/ein-api';
+const ADSB_API_BASE = import.meta.env.VITE_ADSB_API_BASE ?? '/adsb';
 
 function apiUrl(base, path) {
   return `${base.replace(/\/$/, '')}${path}`;
