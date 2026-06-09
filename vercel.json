@@ -11,11 +11,9 @@
   ],
   "functions": {
     "api/adsb/[...path].js": {
-      "memory": 512,
       "maxDuration": 10
     },
     "api/ein-api/[...path].js": {
-      "memory": 512,
       "maxDuration": 10
     }
   }
