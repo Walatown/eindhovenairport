@@ -2,7 +2,7 @@
 
 Real-time arrivals and departures for Eindhoven Airport. Built with React + Vite + Mapbox GL JS. Combines official flight schedules, ADS-B tracking, and route data for reliable, global flight tracking.
 
-**[View live](https://eindhovenairport.vercel.app/)** | 
+**[View live](https://eindhovenairport.vercel.app/)** | **[Technical details](./TECHNICAL_CHANGELOG.md)** | **[Contributing](./CONTRIBUTING.md)**
 
 ## Features
 
@@ -103,6 +103,13 @@ Edit `src/data/airports.js` — add `IATA: [longitude, latitude]` to `AIRPORT_CO
 
 ### Debug flight data
 Open DevTools console. You'll see logs like:
+```
+[ARR ✓] RYR3QR — 45 km, 8500 ft
+[ARRIVALS] board=15 matched=12 not-airborne=[KLM20, TUI542]
+```
+
+### Test with no internet
+The app uses real-time APIs — no offline mode yet. Flights won't load without network access.
 
 ## Known Limitations
 
@@ -116,9 +123,9 @@ Open DevTools console. You'll see logs like:
 The app is deployed to Vercel:
 - **Branch deploys** — Each branch gets a preview URL
 - **Main deploys** — Auto-deployed to production on merge
-- **API proxies** — Vercel rewrites `/adsb/*` and `/ein-api/*` requests to upstream APIs
+- **API proxies** — Serverless functions proxy `/adsb/*` and `/ein-api/*` requests to upstream APIs with CORS headers and error handling
 
-See `vercel.json` for proxy configuration.
+See `vercel.json` and `api/` folder for proxy configuration.
 
 ## Contributing
 

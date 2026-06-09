@@ -650,7 +650,7 @@ export default function MapSection() {
       </div>
 
       {/* Detail panel */}
-      <FlightCard flight={selected} mode={mode} onClose={() => {
+      <FlightCard flight={selected} mode={mode} flights={flights} onClose={() => {
         setSelected(null);
         Object.values(markersRef.current).forEach(m => m.el?.classList?.remove('sel'));
         if (mapRef.current) clearRoute(mapRef.current);

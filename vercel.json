@@ -2,11 +2,21 @@
   "rewrites": [
     {
       "source": "/ein-api/:path*",
-      "destination": "https://www.eindhovenairport.nl/:path*"
+      "destination": "/api/ein-api?path=:path*"
     },
     {
       "source": "/adsb/:path*",
-      "destination": "https://api.adsb.lol/:path*"
+      "destination": "/api/adsb?path=:path*"
     }
-  ]
+  ],
+  "functions": {
+    "api/adsb.js": {
+      "memory": 512,
+      "maxDuration": 10
+    },
+    "api/ein-api.js": {
+      "memory": 512,
+      "maxDuration": 10
+    }
+  }
 }
