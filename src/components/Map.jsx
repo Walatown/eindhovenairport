@@ -58,7 +58,7 @@ function fmtAlt(ft) {
 }
 
 // ── Side flight panel ─────────────────────────────────────────────────────────
-function FlightPanel({ flights, mode, loading, selectedId, onSelect, opacity }) {
+function FlightPanel({ flights, mode, loading, error, selectedId, onSelect, opacity }) {
   const sorted = mode === 'arrivals'
     ? [...flights].sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999))
     : [...flights].sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
@@ -127,7 +127,17 @@ function FlightPanel({ flights, mode, loading, selectedId, onSelect, opacity }) 
             Fetching live data…
           </div>
         )}
-        {!loading && sorted.length === 0 && (
+        {!loading && error && (
+          <div style={{ padding: '16px 18px', color: '#f97316', fontSize: 12, lineHeight: 1.5 }}>
+            <strong>Unable to fetch flights</strong>
+            <p style={{ margin: '8px 0 0 0', color: '#e88f5a', fontSize: 11 }}>
+              {error.includes('fetch') || error.includes('connection')
+                ? 'The ADS-B data service is currently unavailable. Please try again in a few moments.'
+                : error}
+            </p>
+          </div>
+        )}
+        {!loading && !error && sorted.length === 0 && (
           <p style={{ fontSize: 12, color: '#2a3650', padding: '16px 18px', margin: 0 }}>No aircraft tracked.</p>
         )}
         {sorted.map((f, idx) => {
@@ -260,7 +270,7 @@ export default function MapSection() {
   const [progress, setProgress]   = useState(0);
   const [ready, setReady]         = useState(false);
 
-  const { flights, loading } = useFlights(mode);
+  const { flights, loading, error } = useFlights(mode);
 
   // Keep selectedRef in sync for use inside rAF / event handlers
   useEffect(() => { selectedRef.current = selected?.icao24 ?? null; }, [selected]);
@@ -583,6 +593,7 @@ export default function MapSection() {
           flights={flights}
           mode={mode}
           loading={loading}
+          error={error}
           selectedId={selected?.icao24}
           onSelect={f => {
             setSelected(prev => prev?.icao24 === f.icao24 ? null : f);
