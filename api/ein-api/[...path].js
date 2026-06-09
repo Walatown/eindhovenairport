@@ -12,24 +12,27 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Extract path from query parameter
-    let pathStr = req.query.path || '';
-    if (Array.isArray(pathStr)) {
-      pathStr = pathStr.join('/');
-    }
+    const { path = [] } = req.query;
+    const pathStr = Array.isArray(path) ? path.join('/') : path;
 
-    // Reconstruct query string (excluding 'path' parameter)
-    const queryParams = new URLSearchParams(req.query);
-    queryParams.delete('path');
-    const queryStr = queryParams.toString();
+    // Reconstruct URL with query parameters
+    const url = new URL(`https://www.eindhovenairport.nl/${pathStr}`);
 
-    // Build final URL
-    const baseUrl = `https://www.eindhovenairport.nl/${pathStr}`;
-    const url = queryStr ? `${baseUrl}?${queryStr}` : baseUrl;
+    // Add any query parameters from the original request
+    Object.keys(req.query).forEach(key => {
+      if (key !== 'path') {
+        const value = req.query[key];
+        if (Array.isArray(value)) {
+          value.forEach(v => url.searchParams.append(key, v));
+        } else {
+          url.searchParams.set(key, value);
+        }
+      }
+    });
 
-    console.log('[ein-api proxy]', url);
+    console.log('[ein-api]', url.toString());
 
-    const response = await fetch(url, {
+    const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
         'User-Agent': 'Flight-Tracker/1.0',
@@ -37,7 +40,7 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      console.error(`[ein-api] upstream error ${response.status} ${response.statusText}`);
+      console.error(`[ein-api] upstream ${response.status} ${response.statusText}`);
     }
 
     const contentType = response.headers.get('content-type');
@@ -51,7 +54,7 @@ export default async function handler(req, res) {
 
     res.status(response.status).setHeader('Content-Type', contentType || 'application/json').send(data);
   } catch (error) {
-    console.error('[ein-api error]', error.message, error.stack);
+    console.error('[ein-api] error:', error.message);
     res.status(502).json({ error: 'Bad Gateway', details: error.message });
   }
 }

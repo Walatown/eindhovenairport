@@ -1,20 +1,20 @@
 {
   "rewrites": [
     {
-      "source": "/ein-api/:path*",
-      "destination": "/api/ein-api?path=:path*"
+      "source": "/adsb/:path*",
+      "destination": "/api/adsb/:path*"
     },
     {
-      "source": "/adsb/:path*",
-      "destination": "/api/adsb?path=:path*"
+      "source": "/ein-api/:path*",
+      "destination": "/api/ein-api/:path*"
     }
   ],
   "functions": {
-    "api/adsb.js": {
+    "api/adsb/[...path].js": {
       "memory": 512,
       "maxDuration": 10
     },
-    "api/ein-api.js": {
+    "api/ein-api/[...path].js": {
       "memory": 512,
       "maxDuration": 10
     }
