@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -8,10 +7,27 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   try {
-    const { path = '' } = req.query;
-    const pathStr = Array.isArray(path) ? path.join('/') : path;
-    const url = `https://api.adsb.lol/${pathStr}${req.url.split('?')[1] ? '?' + req.url.split('?')[1] : ''}`;
+    // Extract path from query parameter
+    let pathStr = req.query.path || '';
+    if (Array.isArray(pathStr)) {
+      pathStr = pathStr.join('/');
+    }
+
+    // Reconstruct query string (excluding 'path' parameter)
+    const queryParams = new URLSearchParams(req.query);
+    queryParams.delete('path');
+    const queryStr = queryParams.toString();
+
+    // Build final URL
+    const baseUrl = `https://api.adsb.lol/${pathStr}`;
+    const url = queryStr ? `${baseUrl}?${queryStr}` : baseUrl;
+
+    console.log('[adsb proxy]', url);
 
     const response = await fetch(url, {
       method: 'GET',
@@ -20,10 +36,14 @@ export default async function handler(req, res) {
       },
     });
 
+    if (!response.ok) {
+      console.error(`[adsb] upstream error ${response.status} ${response.statusText}`);
+    }
+
     const data = await response.json();
     res.status(response.status).json(data);
   } catch (error) {
-    console.error('[adsb proxy error]', error.message);
-    res.status(502).json({ error: 'Bad Gateway', message: error.message });
+    console.error('[adsb error]', error.message, error.stack);
+    res.status(502).json({ error: 'Bad Gateway', details: error.message });
   }
 }
