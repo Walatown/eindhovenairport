@@ -2,6 +2,28 @@ import { useState, useEffect, useCallback } from 'react';
 import { airlineFromCallsign } from '../data/airlines';
 import { lookupAirport } from '../data/airports';
 
+// Throttle concurrent requests to avoid rate limiting
+function createThrottle(maxConcurrent) {
+  let running = 0;
+  const queue = [];
+
+  return async function throttle(fn) {
+    while (running >= maxConcurrent) {
+      await new Promise(resolve => queue.push(resolve));
+    }
+    running++;
+    try {
+      return await fn();
+    } finally {
+      running--;
+      const resolve = queue.shift();
+      if (resolve) resolve();
+    }
+  };
+}
+
+const throttle = createThrottle(3); // max 3 concurrent requests to adsb.lol
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA SOURCES
 //
@@ -92,16 +114,26 @@ function routeAirports(boardFlight) {
 }
 
 // ── adsb.lol — per-callsign global lookup ─────────────────────────────────────
+const _adsbCache = new Map(); // callsign → { ac, ts }
+const ADSB_TTL = 15 * 1000; // 15 seconds
+
 async function fetchByCallsign(callsign) {
-  try {
-    const res = await fetch(apiUrl(ADSB_API_BASE, `/v2/callsign/${encodeURIComponent(callsign)}`));
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!Array.isArray(data.ac) || data.ac.length === 0) return null;
-    return data.ac.find(ac => norm(ac.flight) === callsign) ?? data.ac[0];
-  } catch {
-    return null;
-  }
+  const hit = _adsbCache.get(callsign);
+  if (hit && Date.now() - hit.ts < ADSB_TTL) return hit.ac;
+
+  return throttle(async () => {
+    try {
+      const res = await fetch(apiUrl(ADSB_API_BASE, `/v2/callsign/${encodeURIComponent(callsign)}`));
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!Array.isArray(data.ac) || data.ac.length === 0) return null;
+      const ac = data.ac.find(ac => norm(ac.flight) === callsign) ?? data.ac[0];
+      _adsbCache.set(callsign, { ac, ts: Date.now() });
+      return ac;
+    } catch {
+      return null;
+    }
+  });
 }
 
 async function lookupBoardFlight(boardFlight) {
